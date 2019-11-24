@@ -4,10 +4,23 @@ import text_generator
 from text import Text
 
 
-def _print_text(win, text):
+def _init_text_win(h, w):
+    # TODO: pad for really huge texts
+    return curses.newwin(h - 1, w, 0, 0)
+
+
+def _init_input_win(h, w):
+    return curses.newwin(1, w - 24, h - 1, 0)
+
+
+def _init_status_win(h, w):
+    return curses.newwin(1, 24, h - 1, w - 24)
+
+
+def _print_text_win(win, text):
     h, w = win.getmaxyx()
 
-    win.erase()
+    win.clear()
 
     for i, word in enumerate(text.words):
         w_s = str(word)
@@ -32,6 +45,44 @@ def _print_text(win, text):
     win.refresh()
 
 
+def _print_input_win(win, text, input_text, key):
+    h, w = win.getmaxyx()
+    win.clear()
+
+    if text.has_next():
+        if input_text:
+            if text.words[text.current_word_index].word_str.startswith(input_text):
+                win.addstr(0, 0, input_text[-w + 1:], curses.color_pair(0))
+            else:
+                win.addstr(0, 0, input_text[-w + 1:], curses.color_pair(3))
+        win.refresh()
+    else:
+        win.addstr('text complete', curses.color_pair(4))
+        win.refresh()
+        return key.lower()
+
+
+def _print_status_win(win, text):
+    win.clear()
+
+    # total number of cols is 6 x 4 = 24
+    complete_str = (str(text.percent_complete) + '%c')[:5]
+    accuracy_str = (str(text.percent_accuracy) + '%a')[:5]
+    mistakes_str = (str(text.mistakes) + 'e')[:4]
+    wpm_str = (str(text.wpm) + 'wpm')[:7]
+    stat_str = ' '.join([complete_str, accuracy_str, mistakes_str, wpm_str])
+    win.insstr(stat_str)
+
+    win.refresh()
+
+
+def _refresh_all(screen, text_win, input_win, status_win):
+    screen.refresh()
+    text_win.refresh()
+    input_win.refresh()
+    status_win.refresh()
+
+
 def main(screen):
     curses.curs_set(0)
     curses.use_default_colors()
@@ -43,38 +94,36 @@ def main(screen):
     curses.init_pair(4, -1, curses.COLOR_GREEN)  # text complete
 
     h, w = screen.getmaxyx()
-
-    # Check if screen was re-sized (True or False)
-    resize = curses.is_term_resized(h, w)
-
-    # Action in loop if resize is True:
-    if resize is True:
-        h, w = screen.getmaxyx()
-        screen.clear()
-        curses.resizeterm(h, w)
-
     screen.refresh()
 
-    # TODO: pad for really huge texts
-    text_win = curses.newwin(h - 1, w, 0, 0)
-    text_win.refresh()
+    text_win = _init_text_win(h, w)
+    input_win = _init_input_win(h, w)
+    status_win = _init_status_win(h, w)
 
-    input_win = curses.newwin(1, w - 20, h - 1, 0)
-    input_win.keypad(True)
-    input_win.refresh()
-
-    status_win = curses.newwin(1, 20, h - 1, w - 20)
-    status_win.addstr(f'{h}:{w}')
-    status_win.refresh()
-
-    words = text_generator.generate('resources/words.txt', 10)
+    words = text_generator.generate('resources/words.txt', 100)
     text = Text(words)
+    _print_text_win(text_win, text)
+    _print_status_win(status_win, text)
 
-    _print_text(text_win, text)
+    _refresh_all(screen, text_win, input_win, status_win)
 
     input_text = ''
     while True:
         key = screen.get_wch()
+
+        if curses.is_term_resized(h, w) is True:
+            h, w = screen.getmaxyx()
+            screen.clear()
+            text_win = _init_text_win(h, w)
+            input_win = _init_input_win(h, w)
+            status_win = _init_status_win(h, w)
+            _refresh_all(screen, text_win, input_win, status_win)
+            _print_text_win(text_win, text)
+            _print_input_win(input_win, text, input_text, key)
+            curses.resize_term(h, w)
+
+        if text.current_word_index == 0 and len(input_text) == 0:
+            text.start_typing()
 
         # TODO: fix ctrl-v OP strategy. Disable copying and/or pasting. Or mouse actions overall
         if key == '\n' or key == ' ':
@@ -86,25 +135,15 @@ def main(screen):
         elif int(key) == curses.KEY_BACKSPACE:
             input_text = input_text[:-1]
 
-        input_win.clear()
+        _print_text_win(text_win, text)
+        _print_status_win(status_win, text)
 
-        if text.has_next():
-            if input_text:
-                if text.words[text.current_word_index].word_str.startswith(input_text):
-                    input_win.addstr(0, 0, input_text, curses.color_pair(0))
-                else:
-                    input_win.addstr(0, 0, input_text, curses.color_pair(3))
-        else:
-            input_win.addstr('text complete', curses.color_pair(4))
-
-            if key.lower() == 'n':
+        key = _print_input_win(input_win, text, input_text, key)
+        if key:
+            if key == 'n':
                 main(screen)
-            elif key.lower() == 'q':
+            if key == 'q':
                 return
-
-        input_win.refresh()
-
-        _print_text(text_win, text)
 
 
 curses.wrapper(main)
