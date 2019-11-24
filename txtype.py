@@ -17,6 +17,13 @@ def _init_status_win(h, w):
     return curses.newwin(1, 24, h - 1, w - 24)
 
 
+def _paint_bar(input_win, status_win, color_pair):
+    input_win.bkgd(' ', color_pair)
+    status_win.bkgd(' ', color_pair)
+    input_win.refresh()
+    status_win.refresh()
+
+
 def _print_text_win(win, text):
     h, w = win.getmaxyx()
 
@@ -45,19 +52,22 @@ def _print_text_win(win, text):
     win.refresh()
 
 
-def _print_input_win(win, text, input_text, key):
+def _print_input_win(win, status_win, text, input_text, key):
     h, w = win.getmaxyx()
     win.clear()
 
     if text.has_next():
         if input_text:
             if text.words[text.current_word_index].word_str.startswith(input_text):
-                win.addstr(0, 0, input_text[-w + 1:], curses.color_pair(0))
+                _paint_bar(win, status_win, curses.color_pair(0))
+                win.addstr(0, 0, input_text[-w + 1:])
             else:
-                win.addstr(0, 0, input_text[-w + 1:], curses.color_pair(3))
+                _paint_bar(win, status_win, curses.color_pair(3))
+                win.addstr(0, 0, input_text[-w + 1:])
         win.refresh()
     else:
-        win.addstr('text complete', curses.color_pair(4))
+        _paint_bar(win, status_win, curses.color_pair(4))
+        win.addstr('text complete')
         win.refresh()
         return key.lower()
 
@@ -100,7 +110,7 @@ def main(screen):
     input_win = _init_input_win(h, w)
     status_win = _init_status_win(h, w)
 
-    words = text_generator.generate('resources/words.txt', 100)
+    words = text_generator.generate('resources/words.txt', 10)
     text = Text(words)
     _print_text_win(text_win, text)
     _print_status_win(status_win, text)
@@ -119,7 +129,7 @@ def main(screen):
             status_win = _init_status_win(h, w)
             _refresh_all(screen, text_win, input_win, status_win)
             _print_text_win(text_win, text)
-            _print_input_win(input_win, text, input_text, key)
+            _print_input_win(input_win, status_win, text, input_text, key)
             curses.resize_term(h, w)
 
         if text.current_word_index == 0 and len(input_text) == 0:
@@ -138,7 +148,7 @@ def main(screen):
         _print_text_win(text_win, text)
         _print_status_win(status_win, text)
 
-        key = _print_input_win(input_win, text, input_text, key)
+        key = _print_input_win(input_win, status_win, text, input_text, key)
         if key:
             if key == 'n':
                 main(screen)
