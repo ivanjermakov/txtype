@@ -1,5 +1,6 @@
 import curses
 
+import terminal
 import text_generator
 from text import Text
 
@@ -15,6 +16,14 @@ def _init_input_win(h, w):
 
 def _init_status_win(h, w):
     return curses.newwin(1, 24, h - 1, w - 24)
+
+
+def _init_command_win(h, w):
+    return curses.newwin(1, w, h - 1, 0)
+
+
+def _init_result_win(h, w):
+    return curses.newwin(1, w, h - 2, 0)
 
 
 def _paint_bar(input_win, status_win, color_pair):
@@ -69,7 +78,7 @@ def _print_input_win(win, status_win, text, input_text, key):
         _paint_bar(win, status_win, curses.color_pair(4))
         win.addstr('text complete')
         win.refresh()
-        return key.lower()
+        return key
 
 
 def _print_status_win(win, text):
@@ -93,6 +102,43 @@ def _refresh_all(screen, text_win, input_win, status_win):
     status_win.refresh()
 
 
+def _show_terminal(screen):
+    h, w = screen.getmaxyx()
+
+    command = ':'
+
+    command_win = _init_command_win(h, w)
+    command_win.clear()
+    command_win.addstr(command)
+    command_win.refresh()
+
+    result_win = _init_result_win(h, w)
+    result_win.refresh()
+
+    while True:
+        ch = screen.get_wch()
+
+        if ch == '\n':
+            result = terminal.execute(screen, command[1:])
+
+            if result:
+                result_win.addstr(result)
+                result_win.refresh()
+
+            command_win.clear()
+            command_win.refresh()
+            break
+        elif ch == curses.KEY_BACKSPACE:
+            if len(command) > 1:
+                command = command[:-1]
+        else:
+            command += ch
+
+        command_win.clear()
+        command_win.addstr(command)
+        command_win.refresh()
+
+
 def _show_welcome(screen):
     h, w = screen.getmaxyx()
 
@@ -108,10 +154,11 @@ def _show_welcome(screen):
         '     ctrl+z       force exit          ',
         '     q            exit                ',
         '     n            next text           ',
-        '     w            welcome page        '
+        '     w            welcome page        ',
+        '     :            enter command       ',
     ]
 
-    if h > 9 and w > 38:
+    if h > 10 and w > 37:
         y = h // 2 - len(lines) // 2
         x = w // 2 - len(lines[0]) // 2
 
@@ -124,6 +171,7 @@ def _show_welcome(screen):
         screen.addstr(y + 7, x + 5, 'q', curses.color_pair(2))
         screen.addstr(y + 8, x + 5, 'n', curses.color_pair(2))
         screen.addstr(y + 9, x + 5, 'w', curses.color_pair(2))
+        screen.addstr(y + 10, x + 5, ':', curses.color_pair(2))
 
     screen.refresh()
 
@@ -136,13 +184,14 @@ def _show_welcome(screen):
         if key == 'n':
             _show_text(screen)
             return
+        if key == ':':
+            _show_terminal(screen)
         if key == 'q':
             return
 
 
 def _show_text(screen):
     h, w = screen.getmaxyx()
-    screen.refresh()
 
     text_win = _init_text_win(h, w)
     input_win = _init_input_win(h, w)
@@ -173,8 +222,6 @@ def _show_text(screen):
         if text.current_word_index == 0 and len(input_text) == 0:
             text.start_typing()
 
-        if key == curses.KEY_MOUSE:
-            pass
         if key == '\n' or key == ' ':
             if text.has_next():
                 text.next(input_text)
