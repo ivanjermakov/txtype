@@ -127,6 +127,14 @@ def _show_welcome(screen):
 
     screen.refresh()
 
+    while True:
+        key = screen.get_wch()
+
+        if key in ['n', 'q']:
+            return key
+        elif key == curses.KEY_RESIZE:
+            _show_welcome(screen)
+
 
 def _show_text(screen):
     h, w = screen.getmaxyx()
@@ -136,7 +144,7 @@ def _show_text(screen):
     input_win = _init_input_win(h, w)
     status_win = _init_status_win(h, w)
 
-    words = text_generator.generate('resources/words.txt', 10)
+    words = text_generator.generate('resources/words.txt', 4)
     text = Text(words)
     _print_text_win(text_win, text)
     _print_status_win(status_win, text)
@@ -147,6 +155,7 @@ def _show_text(screen):
     while True:
         key = screen.get_wch()
 
+        # TODO: refactor
         if key == curses.KEY_RESIZE:
             h, w = screen.getmaxyx()
             screen.clear()
@@ -174,7 +183,9 @@ def _show_text(screen):
         _print_text_win(text_win, text)
         _print_status_win(status_win, text)
 
-        return _print_input_win(input_win, status_win, text, input_text, key)
+        key = _print_input_win(input_win, status_win, text, input_text, key)
+        if key and key in ['n', 'w', 'q']:
+            return key
 
 
 def main(screen):
@@ -188,16 +199,11 @@ def main(screen):
     curses.init_pair(3, -1, curses.COLOR_RED)  # input error
     curses.init_pair(4, -1, curses.COLOR_GREEN)  # text complete
 
-    _show_welcome(screen)
-
-    while True:
-        key = screen.get_wch()
-        if key == curses.KEY_RESIZE:
-            _show_welcome(screen)
-        elif key == 'n':
-            break
-        elif key == 'q':
-            return
+    key = _show_welcome(screen)
+    if key == curses.KEY_RESIZE:
+        _show_welcome(screen)
+    elif key == 'q':
+        return
 
     key = _show_text(screen)
     if key:
