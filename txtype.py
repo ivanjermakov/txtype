@@ -130,10 +130,14 @@ def _show_welcome(screen):
     while True:
         key = screen.get_wch()
 
-        if key in ['n', 'q']:
-            return key
-        elif key == curses.KEY_RESIZE:
+        if key == curses.KEY_RESIZE:
             _show_welcome(screen)
+            return
+        if key == 'n':
+            _show_text(screen)
+            return
+        if key == 'q':
+            return
 
 
 def _show_text(screen):
@@ -184,8 +188,18 @@ def _show_text(screen):
         _print_status_win(status_win, text)
 
         key = _print_input_win(input_win, status_win, text, input_text, key)
-        if key and key in ['n', 'w', 'q']:
-            return key
+
+        if not key:
+            continue
+
+        if key == 'n':
+            _show_text(screen)
+            return
+        if key == 'w':
+            _show_welcome(screen)
+            return
+        if key == 'q':
+            return
 
 
 def main(screen):
@@ -199,20 +213,7 @@ def main(screen):
     curses.init_pair(3, -1, curses.COLOR_RED)  # input error
     curses.init_pair(4, -1, curses.COLOR_GREEN)  # text complete
 
-    key = _show_welcome(screen)
-    if key == curses.KEY_RESIZE:
-        _show_welcome(screen)
-    elif key == 'q':
-        return
-
-    key = _show_text(screen)
-    if key:
-        if key == 'n':
-            _show_text(screen)
-        if key == 'w':
-            main(screen)
-        if key == 'q':
-            return
+    _show_welcome(screen)
 
 
 curses.wrapper(main)
