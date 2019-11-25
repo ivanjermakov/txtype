@@ -245,6 +245,10 @@ def _show_text(screen):
         if key == 'w':
             _show_welcome(screen)
             return
+        if key == ':':
+            _show_terminal(screen)
+            _print_status_win(status_win, text)
+            _print_input_win(input_win, status_win, text, input_text, key)
         if key == 'q':
             return
 
@@ -253,7 +257,6 @@ def main(screen):
     curses.mousemask(1)
     curses.curs_set(0)
     curses.use_default_colors()
-    curses.cbreak()
 
     curses.init_pair(1, curses.COLOR_RED, -1)  # error
     curses.init_pair(2, curses.COLOR_GREEN, -1)  # correct
