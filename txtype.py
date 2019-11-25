@@ -102,7 +102,7 @@ def _refresh_all(screen, text_win, input_win, status_win):
     status_win.refresh()
 
 
-def _show_terminal(screen):
+def _command_view(screen):
     h, w = screen.getmaxyx()
 
     command = ':'
@@ -139,7 +139,7 @@ def _show_terminal(screen):
         command_win.refresh()
 
 
-def _show_welcome(screen):
+def _welcome_view(screen):
     h, w = screen.getmaxyx()
 
     screen.clear()
@@ -179,18 +179,18 @@ def _show_welcome(screen):
         key = screen.get_wch()
 
         if key == curses.KEY_RESIZE:
-            _show_welcome(screen)
+            _welcome_view(screen)
             return
         if key == 'n':
-            _show_text(screen)
+            _text_view(screen)
             return
         if key == ':':
-            _show_terminal(screen)
+            _command_view(screen)
         if key == 'q':
             return
 
 
-def _show_text(screen):
+def _text_view(screen):
     h, w = screen.getmaxyx()
 
     text_win = _init_text_win(h, w)
@@ -240,13 +240,13 @@ def _show_text(screen):
             continue
 
         if key == 'n':
-            _show_text(screen)
+            _text_view(screen)
             return
         if key == 'w':
-            _show_welcome(screen)
+            _welcome_view(screen)
             return
         if key == ':':
-            _show_terminal(screen)
+            _command_view(screen)
             _print_status_win(status_win, text)
             _print_input_win(input_win, status_win, text, input_text, key)
         if key == 'q':
@@ -263,7 +263,7 @@ def main(screen):
     curses.init_pair(3, -1, curses.COLOR_RED)  # input error
     curses.init_pair(4, -1, curses.COLOR_GREEN)  # text complete
 
-    _show_welcome(screen)
+    _welcome_view(screen)
 
 
 curses.wrapper(main)
