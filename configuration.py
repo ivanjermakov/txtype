@@ -30,23 +30,14 @@ class Configuration:
             self.config[param] = CONFIG_TEMPLATE[param]
             return f'set parameter "{param}" to default "{CONFIG_TEMPLATE[param]}"'
 
+    def get_param(self, param):
+        return self.config[param]
+
     def dump(self):
         return json.dumps(self.config, indent=4)
-
-    def write(self, path):
-        string = self.dump()
-        with open(path, 'w') as f:
-            f.write(string)
 
     @staticmethod
     def load(json_string):
         config = Configuration()
         config.config = json.loads(json_string)
         return config
-
-    @staticmethod
-    def read(path):
-        with open(path) as f:
-            config = Configuration()
-            config.config = Configuration.load(f.read())
-            return config
