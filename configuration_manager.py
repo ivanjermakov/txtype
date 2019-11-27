@@ -1,17 +1,20 @@
 import os
 
-import configuration
+from configuration import Configuration
 
 
 class ConfigurationManager:
-    def __init__(self, path):
+    def __init__(self, path, create):
         self.path = path
 
         dir_path = path[:path.rfind('/')]
         if not os.path.exists(path):
-            os.makedirs(dir_path)
-            self.config = configuration.DEFAULT
-            self.write()
+            if create:
+                os.makedirs(dir_path, exist_ok=True)
+                self.config = Configuration()
+                self.write()
+            else:
+                raise IOError(f'configuration file "{path}" not found. Use flag --new to create new configuration file')
 
         self.config = self.read()
 
@@ -21,4 +24,4 @@ class ConfigurationManager:
 
     def read(self):
         with open(self.path) as f:
-            return configuration.Configuration.load(f.read())
+            return Configuration.load(f.read())

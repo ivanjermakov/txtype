@@ -8,10 +8,12 @@ from text import Text
 
 
 class Application:
-    CONFIG_PATH = os.environ['HOME'] + '/.config/txtype/config.json'
+    DEFAULT_CONFIG_PATH = os.environ['HOME'] + '/.config/txtype/config.json'
 
-    def __init__(self):
-        self.config_manager = ConfigurationManager(self.CONFIG_PATH)
+    def __init__(self, config=None, create=None):
+        config = config or self.DEFAULT_CONFIG_PATH
+        create = create or False
+        self.config_manager = ConfigurationManager(os.path.abspath(config), create)
         self.executor = CommandExecutor(self.config_manager)
 
     def _init_text_win(self, h, w):
