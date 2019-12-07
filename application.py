@@ -233,6 +233,11 @@ class Application:
                     text.next(input_text)
                 input_text = ''
             elif type(key) == str:
+                if text.has_next():
+                    current_word = text.words[text.current_word_index].word_str
+                    if current_word.startswith(input_text) and \
+                            not current_word.startswith(input_text + key):
+                        text.mistakes += 1
                 input_text += key
             elif int(key) == curses.KEY_BACKSPACE:
                 input_text = input_text[:-1]
