@@ -41,7 +41,6 @@ class Text:
         current_word = self.words[self.current_word_index]
         if current_word.word_str != word_str:
             current_word.misspelled = True
-            self.mistakes += 1
         else:
             self.correct_chars += len(current_word.word_str)
         self.current_word_index += 1
