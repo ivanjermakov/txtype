@@ -41,7 +41,7 @@ class Application:
     def _print_text_win(self, win, text):
         h, w = win.getmaxyx()
 
-        win.clear()
+        win.erase()
 
         for i, word in enumerate(text.words):
             w_s = str(word)
@@ -67,7 +67,7 @@ class Application:
 
     def _print_input_win(self, win, status_win, text, input_text, key):
         h, w = win.getmaxyx()
-        win.clear()
+        win.erase()
 
         if text.has_next():
             self._paint_bar(win, status_win, curses.color_pair(0))
@@ -85,7 +85,7 @@ class Application:
             return key
 
     def _print_status_win(self, win, text):
-        win.clear()
+        win.erase()
 
         # total number of cols is 6 x 4 = 24
         complete_str = (str(text.percent_complete) + '%c')[:5]
@@ -109,7 +109,7 @@ class Application:
         command = ':'
 
         command_win = self._init_command_win(h, w)
-        command_win.clear()
+        command_win.erase()
         command_win.addstr(command)
         command_win.refresh()
 
@@ -123,7 +123,7 @@ class Application:
                 if len(command) > 1:
                     command = command[:-1]
                 else:
-                    command_win.clear()
+                    command_win.erase()
                     command_win.refresh()
                     break
             elif ch == '\n':
@@ -133,20 +133,20 @@ class Application:
                     result_win.addstr(result)
                     result_win.refresh()
 
-                command_win.clear()
+                command_win.erase()
                 command_win.refresh()
                 break
             if type(ch) == str:
                 command += ch
 
-            command_win.clear()
+            command_win.erase()
             command_win.addstr(command)
             command_win.refresh()
 
     def _welcome_view(self, screen):
         h, w = screen.getmaxyx()
 
-        screen.clear()
+        screen.erase()
 
         lines = [
             '          Welcome to TXTYPE!          ',
@@ -217,7 +217,7 @@ class Application:
             # TODO: refactor
             if key == curses.KEY_RESIZE:
                 h, w = screen.getmaxyx()
-                screen.clear()
+                screen.erase()
                 text_win = self._init_text_win(h, w)
                 input_win = self._init_input_win(h, w)
                 status_win = self._init_status_win(h, w)
@@ -262,6 +262,9 @@ class Application:
         curses.mousemask(1)
         curses.curs_set(0)
         curses.use_default_colors()
+
+        screen.idcok(False)
+        screen.idlok(False)
 
         curses.init_pair(1, curses.COLOR_RED, -1)  # error
         curses.init_pair(2, curses.COLOR_GREEN, -1)  # correct
